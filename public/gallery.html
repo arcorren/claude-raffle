@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clawd Variations</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+<style>
+  :root {
+    --bg: #1b1917;
+    --panel: #242019;
+    --edge: #3a352c;
+    --ink: #ede6dc;
+    --dim: #8a8378;
+    --coral: #d97757;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+    padding: 32px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: var(--dim); font-size: 14px; margin-bottom: 28px; }
+  table { border-collapse: separate; border-spacing: 14px 18px; }
+  th {
+    color: var(--dim);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  th.rowhead { text-align: right; padding-right: 6px; }
+  td {
+    background: var(--panel);
+    border: 1px solid var(--edge);
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-align: center;
+  }
+  td .pair { display: flex; gap: 14px; align-items: center; justify-content: center; }
+  canvas { image-rendering: pixelated; width: 96px; height: 72px; display: block; }
+</style>
+</head>
+<body>
+  <h1>Clawd variations</h1>
+  <p class="sub">6 body shades × 12 eye styles = 72 combinations. Sizes on the big screen also vary ±15%.</p>
+  <table id="grid"></table>
+
+<script src="/clawd.js"></script>
+<script>
+  const EYE_NAMES = ['dots', 'shades', 'squint', 'sleepy', 'wink', 'surprised', 'dizzy', 'happy', 'beady', 'brows', 'spiral', 'third eye'];
+  const grid = document.getElementById('grid');
+
+  const header = document.createElement('tr');
+  header.innerHTML = '<th></th>' + Clawd.BODY_COLORS.map((c) => `<th>${c}</th>`).join('');
+  grid.appendChild(header);
+
+  Clawd.EYES.forEach((eyes, ei) => {
+    const row = document.createElement('tr');
+    const label = document.createElement('th');
+    label.className = 'rowhead';
+    label.textContent = EYE_NAMES[ei];
+    row.appendChild(label);
+    Clawd.BODY_COLORS.forEach((color) => {
+      const cell = document.createElement('td');
+      const canvas = document.createElement('canvas');
+      Clawd.drawVariant(canvas, { color, eyes }, 8);
+      canvas.style.margin = '0 auto';
+      cell.appendChild(canvas);
+      row.appendChild(cell);
+    });
+    grid.appendChild(row);
+  });
+</script>
+</body>
+</html>

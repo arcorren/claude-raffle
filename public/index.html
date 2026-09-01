@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Claude Raffle — Enter the drawing</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+<style>
+  :root {
+    --bg: #1b1917;
+    --panel: #242019;
+    --ink: #ede6dc;
+    --dim: #8a8378;
+    --coral: #d97757;
+    --coral-bright: #e88b6a;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .prompt {
+    color: var(--dim);
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .prompt .dollar { color: var(--coral); }
+  h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .sub { color: var(--dim); font-size: 14px; margin-bottom: 36px; }
+  .sub strong { color: var(--coral-bright); font-weight: 600; }
+  form { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
+  input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid #3a352c;
+    border-radius: 10px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 18px;
+    padding: 16px;
+    outline: none;
+  }
+  input:focus { border-color: var(--coral); }
+  input::placeholder { color: var(--dim); }
+  button {
+    background: var(--coral);
+    border: none;
+    border-radius: 10px;
+    color: #1b1310;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 16px;
+    cursor: pointer;
+  }
+  button:active { background: var(--coral-bright); }
+  button:disabled { opacity: 0.6; }
+  .error { color: var(--coral-bright); font-size: 14px; min-height: 18px; }
+  .count { color: var(--dim); font-size: 14px; margin-top: 28px; }
+  .count strong { color: var(--ink); }
+
+  /* entered state */
+  .entered { text-align: center; display: none; }
+  .clawd-card {
+    background: var(--panel);
+    border: 1px solid #4a4436;
+    border-radius: 16px;
+    padding: 18px 28px 14px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    display: inline-block;
+  }
+  .clawd-card:active { border-color: var(--coral); background: #2a251c; }
+  .clawd-card #myClawd {
+    image-rendering: pixelated;
+    width: 128px; height: 96px;
+    display: block;
+    margin: 0 auto 8px;
+  }
+  .taphint { color: var(--coral-bright); font-size: 13px; }
+
+  /* look picker */
+  .picker {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 18, 15, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px;
+    z-index: 20;
+  }
+  .picker.show { display: flex; }
+  .picker h3 { font-size: 18px; font-weight: 600; }
+  .picker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .picker-grid button {
+    background: var(--panel);
+    border: 1px solid #3a352c;
+    border-radius: 12px;
+    padding: 10px 6px;
+    cursor: pointer;
+  }
+  .picker-grid button:active { border-color: var(--coral); }
+  .picker-grid canvas {
+    image-rendering: pixelated;
+    width: 80px; height: 60px;
+    display: block;
+    margin: 0 auto;
+  }
+  .picker-actions { display: flex; gap: 12px; }
+  .picker-actions button {
+    background: var(--panel);
+    border: 1px solid #3a352c;
+    border-radius: 10px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    padding: 10px 22px;
+    cursor: pointer;
+  }
+  .picker-actions #shuffleBtn { color: var(--coral-bright); border-color: var(--coral); }
+  .entered .lookfor { color: var(--dim); font-size: 13px; margin-top: 24px; }
+  .entered .linkstate { color: var(--coral-bright); font-size: 13px; min-height: 18px; margin-top: 6px; }
+
+  /* d-pad controller */
+  .dpad {
+    margin: 26px auto 0;
+    display: grid;
+    grid-template-columns: repeat(3, 84px);
+    grid-template-rows: repeat(3, 84px);
+    gap: 10px;
+    justify-content: center;
+    touch-action: none;
+  }
+  .dpad button {
+    background: var(--panel);
+    border: 1px solid #3a352c;
+    border-radius: 14px;
+    color: var(--coral-bright);
+    font-size: 30px;
+    padding: 0;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+  }
+  .dpad button:active, .dpad button.held {
+    background: var(--coral);
+    color: #1b1310;
+    border-color: var(--coral);
+  }
+  .dpad .u { grid-area: 1 / 2; }
+  .dpad .l { grid-area: 2 / 1; }
+  .dpad .r { grid-area: 2 / 3; }
+  .dpad .d { grid-area: 3 / 2; }
+  .dpad .mid {
+    grid-area: 2 / 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dim);
+    font-size: 22px;
+  }
+  .entered h2 { font-size: 24px; margin-bottom: 8px; }
+  .entered p { color: var(--dim); font-size: 14px; }
+  .entered .you { color: var(--coral-bright); }
+  body.done form, body.done .headline { display: none; }
+  body.done .entered { display: block; }
+</style>
+</head>
+<body>
+  <div class="headline">
+    <div class="prompt"><span class="dollar">&gt;</span> claude giveaway --join</div>
+    <h1>Win the Clawd hat</h1>
+    <p class="sub">Drop your name in. One winner, drawn live on the big screen.</p>
+  </div>
+
+  <form id="form">
+    <input id="name" type="text" placeholder="Your name" maxlength="24" autocomplete="name" autofocus>
+    <button id="btn" type="submit">Enter the drawing</button>
+    <div class="error" id="error"></div>
+  </form>
+
+  <div class="entered" id="entered">
+    <button class="clawd-card" id="clawdCard" type="button">
+      <canvas id="myClawd"></canvas>
+      <span class="taphint">tap to change your look</span>
+    </button>
+    <h2>You're in, <span class="you" id="youName"></span></h2>
+    <p>This is your Clawd — find it on the big screen.</p>
+    <div class="dpad" id="dpad">
+      <button class="u" data-dir="up" aria-label="Move up">▲</button>
+      <button class="l" data-dir="left" aria-label="Move left">◀</button>
+      <div class="mid">🕹</div>
+      <button class="r" data-dir="right" aria-label="Move right">▶</button>
+      <button class="d" data-dir="down" aria-label="Move down">▼</button>
+    </div>
+    <p class="lookfor">tap or hold to drive your Clawd</p>
+    <p class="linkstate" id="linkstate"></p>
+  </div>
+
+  <p class="count" id="count"></p>
+
+  <div class="picker" id="picker">
+    <h3>Pick your Clawd</h3>
+    <div class="picker-grid" id="pickerGrid"></div>
+    <div class="picker-actions">
+      <button id="shuffleBtn" type="button">shuffle</button>
+      <button id="closePicker" type="button">cancel</button>
+    </div>
+  </div>
+
+<script src="/clawd.js"></script>
+<script>
+  const form = document.getElementById('form');
+  const nameInput = document.getElementById('name');
+  const btn = document.getElementById('btn');
+  const errorEl = document.getElementById('error');
+  const countEl = document.getElementById('count');
+
+  function showEntered(name, look) {
+    document.getElementById('youName').textContent = name;
+    Clawd.drawVariant(document.getElementById('myClawd'), Clawd.variantWithLook(name, look), 8);
+    document.body.classList.add('done');
+  }
+
+  function savedEntry() {
+    try {
+      const raw = localStorage.getItem('claw-entry');
+      const e = JSON.parse(raw);
+      if (e && typeof e.name === 'string' && typeof e.token === 'string') return e;
+    } catch {}
+    // old format or garbage — clear it so the form shows
+    try { localStorage.removeItem('claw-entry'); } catch {}
+    return null;
+  }
+
+  const saved = savedEntry();
+  if (saved) showEntered(saved.name, saved.look);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.textContent = '';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/enter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: nameInput.value }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errorEl.textContent = data.error || 'Something went wrong. Try again.';
+      } else {
+        try { localStorage.setItem('claw-entry', JSON.stringify({ name: data.name, token: data.token })); } catch {}
+        showEntered(data.name);
+        updateCount(data.count);
+      }
+    } catch {
+      errorEl.textContent = 'Could not reach the server. Try again.';
+    }
+    btn.disabled = false;
+  });
+
+  function updateCount(n) {
+    if (typeof n === 'number' && n > 0) {
+      countEl.innerHTML = '<strong>' + n + '</strong> ' + (n === 1 ? 'person' : 'people') + ' in the drawing';
+    }
+  }
+
+  // live-ish count via light polling — phones must not hold persistent
+  // connections open through the tunnel (free-tunnel in-flight cap)
+  function pollCount() {
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((cfg) => updateCount(cfg.count))
+      .catch(() => {});
+  }
+  pollCount();
+  setTimeout(() => setInterval(pollCount, 8000), Math.random() * 8000);
+
+  // --- d-pad controller ---
+  function sendMove(dir) {
+    const entry = savedEntry();
+    if (!entry) return;
+    fetch('/api/move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: entry.name, token: entry.token, dir }),
+    }).then((res) => {
+      document.getElementById('linkstate').textContent = '';
+      if (res.status === 404 || res.status === 403) {
+        // entries were reset since this phone entered — start over
+        stopRepeat();
+        try { localStorage.removeItem('claw-entry'); } catch {}
+        document.body.classList.remove('done');
+      }
+    }).catch(() => {
+      // tunnel blip — presses aren't reaching the screen right now
+      document.getElementById('linkstate').textContent = 'reconnecting to the big screen…';
+    });
+  }
+
+  let repeatTimer = null;
+  function stopRepeat(btn) {
+    if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
+    if (btn) btn.classList.remove('held');
+  }
+
+  document.querySelectorAll('.dpad button').forEach((btn) => {
+    const dir = btn.dataset.dir;
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      stopRepeat(btn);
+      btn.classList.add('held');
+      sendMove(dir);
+      repeatTimer = setInterval(() => sendMove(dir), 160);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) =>
+      btn.addEventListener(ev, () => stopRepeat(btn))
+    );
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
+
+  // --- look picker ---
+  const picker = document.getElementById('picker');
+  const pickerGrid = document.getElementById('pickerGrid');
+  const N_COLORS = Clawd.BODY_COLORS.length;
+  const N_EYES = Clawd.EYES.length;
+
+  function shufflePicker() {
+    const entry = savedEntry();
+    if (!entry) return;
+    // sample 9 distinct looks from the full set
+    const all = [];
+    for (let c = 0; c < N_COLORS; c++) for (let e = 0; e < N_EYES; e++) all.push({ c, e });
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    pickerGrid.replaceChildren();
+    all.slice(0, 9).forEach((look) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      const canvas = document.createElement('canvas');
+      Clawd.drawVariant(canvas, Clawd.variantWithLook(entry.name, look), 5);
+      b.appendChild(canvas);
+      b.addEventListener('click', () => applyLook(look));
+      pickerGrid.appendChild(b);
+    });
+  }
+
+  function applyLook(look) {
+    const entry = savedEntry();
+    if (!entry) return;
+    fetch('/api/look', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: entry.name, token: entry.token, look }),
+    }).then((res) => {
+      if (res.ok) {
+        entry.look = look;
+        try { localStorage.setItem('claw-entry', JSON.stringify(entry)); } catch {}
+        showEntered(entry.name, look);
+        picker.classList.remove('show');
+      } else if (res.status === 404 || res.status === 403) {
+        picker.classList.remove('show');
+        try { localStorage.removeItem('claw-entry'); } catch {}
+        document.body.classList.remove('done');
+      }
+    }).catch(() => {});
+  }
+
+  document.getElementById('clawdCard').addEventListener('click', () => {
+    shufflePicker();
+    picker.classList.add('show');
+  });
+  document.getElementById('shuffleBtn').addEventListener('click', shufflePicker);
+  document.getElementById('closePicker').addEventListener('click', () => picker.classList.remove('show'));
+</script>
+</body>
+</html>

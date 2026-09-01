@@ -1,0 +1,10 @@
+{
+  "name": "claude-raffle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live giveaway drawing for the Claude Code meetup",
+  "scripts": {
+    "start": "./start.sh",
+    "dev": "node server.js"
+  }
+}
