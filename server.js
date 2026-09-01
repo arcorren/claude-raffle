@@ -91,11 +91,20 @@ function lanUrl() {
 
 // Only the screen page on Alex's laptop may draw/reset. Tunnel traffic
 // arrives via localhost too, but cloudflared always adds forwarding
-// headers — a genuine screen-page request has neither.
+// headers — a genuine screen-page request has neither. Origin check
+// blocks CSRF from other sites open in the laptop's browser (browsers
+// always send Origin on POST; header-less requests are CLI tools).
 function isLocalRequest(req) {
   const addr = req.socket.remoteAddress || '';
   const loopback = addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
   const proxied = 'cf-connecting-ip' in req.headers || 'x-forwarded-for' in req.headers;
+  if (req.headers.origin) {
+    try {
+      if (new URL(req.headers.origin).host !== req.headers.host) return false;
+    } catch {
+      return false;
+    }
+  }
   return loopback && !proxied;
 }
 
