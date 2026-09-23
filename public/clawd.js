@@ -112,14 +112,16 @@
     return v;
   }
 
-  // Variant for a name, with an optional custom look {c, e} (color/eye indexes)
-  // overriding the hashed defaults. Size always stays hash-derived.
+  // Variant for a name, with an optional custom look {c, e, s} (color/eye/size
+  // indexes) overriding the hashed defaults. Phones only ever set {c, e}; `s`
+  // exists so a renamed entry (e.g. privacy-trimmed names) keeps its exact critter.
   function variantWithLook(name, look) {
     const v = variantFor(name);
     if (look && Number.isInteger(look.c) && Number.isInteger(look.e)) {
       v.color = BODY_COLORS[Math.abs(look.c) % BODY_COLORS.length];
       v.eyes = EYES[Math.abs(look.e) % EYES.length];
     }
+    if (look && Number.isInteger(look.s)) v.size = 0.85 + (Math.abs(look.s) % 5) * 0.075;
     return v;
   }
 

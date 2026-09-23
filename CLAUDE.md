@@ -1,6 +1,6 @@
 # Claude Raffle
 
-Live giveaway drawing app for the Claude Code meetup (clawed hat prize). Zero-dependency Node server + two vanilla HTML pages. Built as a quick Claude Code showcase.
+Live giveaway drawing app for the Claude Code meetup (Clawd hat prize). Zero-dependency Node server + two vanilla HTML pages. Built as a quick Claude Code showcase. Public repo; user-facing docs live in README.md, this file is the agent-facing map.
 
 ## Run it (day-of checklist)
 
@@ -38,4 +38,5 @@ Then open **http://localhost:4747/screen** on the laptop and put it on the proje
 - After entering, the phone becomes a d-pad controller (tap = one step, hold = repeat every 160ms). Moves require the entry's token; wrong/missing token → 403. A driven critter stops wandering for 8s after the last command.
 - If entries are reset while a phone still holds a stale "you're in" state, its next move gets a 404/403 and the phone drops back to the entry form automatically. Old string-format `entries.json` / localStorage from before tokens are migrated/cleared on load.
 - **Scale (tested reasoning, ~100 attendees):** phones hold NO persistent connections through the tunnel — the entry-page count polls `/api/config` every 8s (staggered). Only the screen uses SSE, and it's on localhost. This keeps the free quick-tunnel's ~200 in-flight request cap irrelevant. Don't reintroduce phone-side SSE/EventSource.
+- **Recording demos:** a look can carry `s` (size index 0–4) so a renamed entry keeps its exact critter; phones never set it. Record with a headless Playwright `recordVideo` session (terminal `screencapture` lacks Screen Recording permission). `docs/demo.gif` uses fictional names; never commit real attendee entries.
 - Names get a light hate-speech filter (`isHateful` in server.js): slurs/hate terms blocked with leet + spacing normalization; crude-but-funny names allowed BY DESIGN — don't expand it into a profanity filter. Substring vs whole-word lists exist to dodge Scunthorpe false positives (spice, raccoon, therapist, Van Dyke). Still reset (`c c`) before doors; `r` re-draws if needed.

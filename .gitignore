@@ -1,2 +1,5 @@
 entries.json
+entries.*.json
+raffle.log
+node_modules
 .DS_Store

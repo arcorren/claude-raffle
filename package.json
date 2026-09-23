@@ -1,8 +1,16 @@
 {
   "name": "claude-raffle",
   "version": "1.0.0",
-  "private": true,
-  "description": "Live giveaway drawing for the Claude Code meetup",
+  "description": "Live meetup giveaway: scan a QR, drive your own pixel-art Clawd on the big screen, slot-machine winner draw",
+  "license": "MIT",
+  "author": "Alex Corren",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arcorren/claude-raffle.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "./start.sh",
     "dev": "node server.js"
